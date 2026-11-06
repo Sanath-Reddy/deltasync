@@ -1,0 +1,35 @@
+# Two-container demo: a server, and a client whose link can be slowed with tc netem.
+#
+#   docker compose up -d --build
+#   docker compose exec client tc qdisc add dev eth0 root netem delay 50ms loss 1%
+#   docker compose exec client python -m bench.make_files --sizes 10
+#   docker compose exec client deltasync push bench/data/10mb.orig f.bin --server server:5001
+#   docker compose exec client deltasync push bench/data/10mb.insert_1k_start f.bin --server server:5001
+#
+# Dashboard: http://localhost:8000
+
+services:
+  server:
+    build: .
+    command: deltasync serve --root /store --host 0.0.0.0 --port 5001 --metrics-port 9100
+    volumes:
+      - store:/store
+
+  dashboard:
+    build: .
+    command: python -m deltasync.dashboard.app --metrics http://server:9100/metrics --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      - server
+
+  client:
+    build: .
+    command: sleep infinity
+    cap_add:
+      - NET_ADMIN
+    depends_on:
+      - server
+
+volumes:
+  store:
