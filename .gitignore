@@ -13,3 +13,6 @@ DeltaSync Implementation Plan.md
 
 # benchmark inputs
 bench/data/
+
+# native build output
+deltasync/_native*.so

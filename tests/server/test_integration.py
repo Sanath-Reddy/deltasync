@@ -143,9 +143,24 @@ async def test_racing_pushes_on_one_file(server, local):
     assert not list(server.root.glob(".*.tmp"))
 
 
-async def test_event_loop_not_blocked_by_delta(server, local):
+@pytest.mark.parametrize(
+    "engine, size, limit",
+    [
+        # The pure-Python reference holds the GIL while it scans, the worst case.
+        ("python", 8 << 20, 0.15),
+        ("native", 96 << 20, 0.1),
+    ],
+)
+async def test_event_loop_not_blocked_by_delta(server, local, monkeypatch, engine, size, limit):
+    from deltasync.core import delta as py_delta
+    from deltasync.server import server as server_mod
+
+    if engine == "python":
+        monkeypatch.setattr(server_mod, "iter_delta", py_delta.iter_delta)
+    elif not __import__("deltasync.core.engine").core.engine.NATIVE:
+        pytest.skip("C++ core not built")
     rng = random.Random(5)
-    (server.root / "big.bin").write_bytes(rng.randbytes(8 << 20))
+    (server.root / "big.bin").write_bytes(rng.randbytes(size))
     # Unrelated local file: the server must roll over every byte of big.bin.
     (local / "big.bin").write_bytes(rng.randbytes(1 << 20))
 
@@ -154,7 +169,7 @@ async def test_event_loop_not_blocked_by_delta(server, local):
             await c.pull("big.bin", local / "big.bin")
 
     task = asyncio.create_task(slow_pull())
-    await asyncio.sleep(0.3)
+    await asyncio.sleep(0.1)
     worst = 0.0
     samples = 0
     while not task.done():
@@ -163,10 +178,10 @@ async def test_event_loop_not_blocked_by_delta(server, local):
         async with await connect(server):
             pass
         worst = max(worst, asyncio.get_running_loop().time() - t)
-        await asyncio.sleep(0.05)
+        await asyncio.sleep(0.02)
     await task
     assert samples >= 5, "the pull finished before the loop could be probed"
-    assert worst < 0.1
+    assert worst < limit, worst
 
 
 async def test_idle_connection_closed(tmp_path):

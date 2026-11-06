@@ -9,10 +9,10 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from deltasync.core.delta import iter_delta
+from deltasync.core.engine import iter_delta, signature_fileobj
 from deltasync.core.files import mapped
 from deltasync.core.patch import HashMismatch, Patcher
-from deltasync.core.signature import block_size_for, empty_signature, signature_fileobj
+from deltasync.core.signature import block_size_for, empty_signature
 from deltasync.protocol import messages
 from deltasync.protocol.frames import FrameTooLarge, encode_frame, frame_size, read_frame
 from deltasync.protocol.stream import iterate_in_thread, pack_ops, recv_signature, send_signature

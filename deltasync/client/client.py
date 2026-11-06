@@ -7,10 +7,10 @@ import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
-from deltasync.core.delta import iter_delta
+from deltasync.core.engine import iter_delta, signature_fileobj
 from deltasync.core.files import mapped
 from deltasync.core.patch import HashMismatch, Patcher
-from deltasync.core.signature import block_size_for, empty_signature, signature_fileobj
+from deltasync.core.signature import block_size_for, empty_signature
 from deltasync.protocol import messages
 from deltasync.protocol.frames import encode_frame, read_frame
 from deltasync.protocol.stream import expect, iterate_in_thread, pack_ops, recv_signature, send_signature

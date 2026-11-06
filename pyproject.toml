@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=69"]
+requires = ["setuptools>=69", "pybind11>=2.12"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -17,6 +17,9 @@ deltasync = "deltasync.client.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["deltasync*"]
+
+[tool.setuptools.package-data]
+deltasync = ["native_src/*.hpp", "native_src/*.h", "native_src/*.cpp"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

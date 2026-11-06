@@ -66,7 +66,7 @@ def iter_delta(sig, new, fixed_block=False):
     n = len(new)
     ops = _Ops()
 
-    tail = sig.short_tail
+    tail = sig.short_tail if entries else 0
     full = len(entries) - (1 if tail else 0)
     index = {}
     for i in range(full):
