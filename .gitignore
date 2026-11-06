@@ -10,3 +10,6 @@ dist/
 
 # personal planning notes, kept out of the public repo
 DeltaSync Implementation Plan.md
+
+# benchmark inputs
+bench/data/
