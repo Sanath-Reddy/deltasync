@@ -51,15 +51,24 @@ def signature(data, block_size=None):
 def signature_file(path, block_size=None):
     """Signature of a file on disk, read one block at a time."""
     with open(path, "rb") as f:
-        size = f.seek(0, 2)
-        f.seek(0)
-        b = block_size or block_size_for(size)
-        h = hashlib.sha256()
-        entries = []
-        while block := f.read(b):
-            h.update(block)
-            entries.append((weak_checksum(block), strong_hash(block)))
+        return signature_fileobj(f, block_size)
+
+
+def signature_fileobj(f, block_size=None):
+    size = f.seek(0, 2)
+    f.seek(0)
+    b = block_size or block_size_for(size)
+    h = hashlib.sha256()
+    entries = []
+    while block := f.read(b):
+        h.update(block)
+        entries.append((weak_checksum(block), strong_hash(block)))
     return Signature(b, h.digest(), entries, size)
+
+
+def empty_signature(block_size):
+    """What a missing file looks like: a full upload becomes a delta of all literals."""
+    return Signature(block_size, hashlib.sha256(b"").digest(), [], 0)
 
 
 def encode_header(sig):
