@@ -10,5 +10,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - run: sudo apt-get install -y rsync
       - run: pip install -e ".[test]"
+      - name: Check the C++ core built
+        run: python -c "from deltasync.core import engine; assert engine.NATIVE"
       - run: pytest
+      - name: Pure-Python engine
+        run: pytest
+        env:
+          DELTASYNC_ENGINE: python
+      - name: README results match the committed CSVs
+        run: python -m bench.report --check
+      - name: Smoke benchmark (10 MB)
+        run: python -m bench.run_bench smoke

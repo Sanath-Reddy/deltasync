@@ -72,8 +72,9 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--metrics", default="http://127.0.0.1:9100/metrics")
     ap.add_argument("--port", type=int, default=8000)
+    ap.add_argument("--host", default="127.0.0.1")
     args = ap.parse_args()
-    create_app(args.metrics).run(port=args.port)
+    create_app(args.metrics).run(host=args.host, port=args.port)
 
 
 if __name__ == "__main__":

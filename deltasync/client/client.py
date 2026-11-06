@@ -34,6 +34,7 @@ class Result:
     ops: int
     literal_bytes: int
     matched_bytes: int = 0
+    resumed_from: int = 0
 
 
 def file_sha256(path):
@@ -85,15 +86,24 @@ class Client:
     async def _read(self, reader=None):
         return await read_frame(self.reader)
 
-    async def push(self, local, remote, after_signature=None, fixed_block=False, transfer_id=None):
-        """Send local to the server as remote. Raises BaseChanged if another push won."""
+    async def push(self, local, remote, after_signature=None, fixed_block=False, transfer_id=None,
+                   resume=False):
+        """Send local to the server as remote. Raises BaseChanged if another push won.
+
+        With resume=True and the transfer_id of an interrupted push, the server keeps
+        what it already made durable and only the rest of the file is sent.
+        """
         local = Path(local)
         size, digest = await asyncio.to_thread(file_sha256, local)
         transfer_id = transfer_id or uuid.uuid4().hex
-        await self._send(messages.PUSH_BEGIN, messages.dump(
-            {"path": remote, "size": size, "sha256": digest, "transfer_id": transfer_id}
-        ))
+        meta = {"path": remote, "size": size, "sha256": digest, "transfer_id": transfer_id}
+        await self._send(messages.RESUME if resume else messages.PUSH_BEGIN, messages.dump(meta))
+        offset = 0
         try:
+            if resume:
+                kind, payload = await self._read()
+                expect(kind, payload, messages.RESUME_OK)
+                offset = messages.load(payload)["offset"]
             sig = await recv_signature(self.reader)
         except messages.ProtocolError as e:
             raise SyncError(str(e)) from None
@@ -101,8 +111,12 @@ class Client:
             await after_signature()
 
         def frames():
-            with open(local, "rb") as f, mapped(f) as new:
-                yield from pack_ops(iter_delta(sig, new, fixed_block))
+            with open(local, "rb") as f, mapped(f) as data:
+                if not offset:
+                    yield from pack_ops(iter_delta(sig, data, fixed_block))
+                    return
+                with memoryview(data) as view, view[offset:] as rest:
+                    yield from pack_ops(iter_delta(sig, rest, fixed_block))
 
         ops = lit = 0
         async for payload, count, nlit in iterate_in_thread(frames):
@@ -114,7 +128,7 @@ class Client:
         kind, payload = await self._read()
         reply = messages.load(payload)
         if kind == messages.COMMIT_OK:
-            return Result(reply["sha256"], ops, lit, reply["matched_bytes"])
+            return Result(reply["sha256"], ops, lit, reply["matched_bytes"], reply.get("resumed_from", 0))
         if kind == messages.COMMIT_FAIL and reply["reason"] == messages.BASE_CHANGED:
             raise BaseChanged(reply["reason"])
         raise SyncError(reply.get("reason") or reply.get("message"))
@@ -167,14 +181,23 @@ class Client:
         return Result(info["sha256"], patcher.ops, patcher.literal_bytes, patcher.matched_bytes)
 
 
-async def push(host, port, token, local, remote, retries=3, **kw):
-    for attempt in range(retries):
-        async with await Client.connect(host, port, token) as c:
-            try:
-                return await c.push(local, remote, **kw)
-            except BaseChanged:
-                if attempt == retries - 1:
-                    raise
+async def push(host, port, token, local, remote, retries=3, retry_delay=0.5, **kw):
+    """Push with retries: a dropped connection resumes, a lost race starts over."""
+    transfer_id = uuid.uuid4().hex
+    resume = False
+    for attempt in range(retries + 1):
+        try:
+            async with await Client.connect(host, port, token) as c:
+                return await c.push(local, remote, transfer_id=transfer_id, resume=resume, **kw)
+        except BaseChanged:
+            if attempt == retries:
+                raise
+            transfer_id, resume = uuid.uuid4().hex, False
+        except (OSError, asyncio.IncompleteReadError, TimeoutError):
+            if attempt == retries:
+                raise
+            resume = True
+            await asyncio.sleep(retry_delay)
 
 
 async def pull(host, port, token, remote, local):

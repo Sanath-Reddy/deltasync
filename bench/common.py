@@ -26,7 +26,8 @@ def commit_hash():
             capture_output=True, text=True, cwd=Path(__file__).parent, check=True,
         )
         dirty = subprocess.run(
-            ["git", "status", "--porcelain", "--untracked-files=no"],
+            # Result files are written by the benchmarks themselves, so they don't count.
+            ["git", "status", "--porcelain", "--untracked-files=no", "--", ":/", ":(top,exclude)bench/results"],
             capture_output=True, text=True, cwd=Path(__file__).parent,
         ).stdout.strip()
         return out.stdout.strip() + ("-dirty" if dirty else "")

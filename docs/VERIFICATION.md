@@ -73,7 +73,7 @@ Tests already written: `tests/protocol/test_frames.py` and `tests/server/test_pa
 | Push and pull end to end | `tests/server/test_integration.py` (M2) | A pushed file's SHA-256 matches on the server; a pulled file's matches on the client |
 | Auth and version | same | A wrong token or protocol version gets ERROR and the connection closes |
 | 50 concurrent pushes | same | All 50 commit and every file's hash is right |
-| Racing pushes on one file | same | One commits; the other gets "base changed, retry"; the file equals the winner's version |
+| Racing pushes on one file | same | One commits; the other gets "base changed, retry"; the file equals the winner's version. The base check compares the file's inode, size and mtime with the version the signature was built from; every commit is an `os.replace`, so any commit changes the inode |
 | Event loop never stalls | same | While a large delta runs, a second client's HELLO is answered within 100 ms |
 | Idle timeout | same | A silent connection closes after the timeout (shortened for the test) |
 
@@ -87,9 +87,9 @@ Test already written: `tests/native/test_differential.py`, which skips until `de
 | GIL released | `tests/native/test_parallel.py` (M3) | Four threads running deltas at once take clearly less wall time than four in a row |
 | Speed | `bench/run_bench.py` | MB/s for Python and C++ on 100 MB and 1 GB, median of five runs, in a CSV |
 
-## M4 · Resume, faults and benchmarks
+## M4 · Resume, faults and benchmarks (tests written: `tests/faults/test_faults.py`)
 
-Written at the start of M4, in `tests/faults/`.
+Server crashes are injected with `DELTASYNC_CRASH_AT=before_replace|after_replace`, which makes the server exit at that point of the commit. Network faults use `bench/count_proxy.py`, which can cut every connection after a byte budget, cap bandwidth and add delay.
 
 | Check | Pass when |
 | --- | --- |
@@ -98,12 +98,22 @@ Written at the start of M4, in `tests/faults/`.
 | Server killed mid-commit | After restart the file is fully old or fully new, checked by SHA-256 |
 | Resume saves bytes | After a kill at 50%, bytes re-sent with resume are about half those without, measured at the proxy |
 | Journal is durable | The journal is written temp-then-rename, and a corrupt journal falls back to a full push |
+| Server restarted mid-push | After a SIGKILL and restart, RESUME continues from the journal |
+| Base changed before resume | Resume starts over from offset 0 against the new base |
+| Orphans | On startup, temp files without a journal are deleted; journalled ones are kept |
 
 ## Benchmark verification
+
+Substitutions forced by the test machine (no root, Docker or SSH server):
+
+- The full-copy baseline is a raw TCP send of the whole file instead of `scp`. rsync runs as a local daemon with `--no-whole-file`.
+- The bad-network experiment adds 25 ms each way (50 ms RTT) in the proxy instead of `tc netem`, so packet loss is not emulated.
+- Edit patterns use 10 MB and 100 MB files. The 1 GB file appears only in the delta-speed experiment, because generating every 1 GB edit case at once does not fit in memory.
+
 
 These apply to every number that goes on the resume:
 
 - Bytes are counted at the proxy, never from the program's own estimate.
 - Five runs on a warm cache; the CSV stores all five and the median.
 - Each row records CPU model, Python version and commit hash.
-- A script checks that every number in the README results table appears in a CSV under `bench/results/`.
+- `python -m bench.report` writes the README results tables from the CSV medians, and `--check` (run in CI) fails if the README and the CSVs disagree.

@@ -1,0 +1,13 @@
+mode,run,bytes_resent,pct_of_file,resumed_from,seconds,cpu,python,commit
+with_resume,1,54531361,52.01,50331648,0.2307,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,daf9dd7
+with_resume,2,54531361,52.01,50331648,0.1786,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,daf9dd7
+with_resume,3,54531361,52.01,50331648,0.2187,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,daf9dd7
+with_resume,4,54531361,52.01,50331648,0.2144,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,daf9dd7
+with_resume,5,54531361,52.01,50331648,0.2345,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,daf9dd7
+with_resume,median,54531361,52.01,50331648,0.2187,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,daf9dd7
+without_resume,1,104867810,100.01,0,0.316,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,daf9dd7
+without_resume,2,104867810,100.01,0,0.3057,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,daf9dd7
+without_resume,3,104867810,100.01,0,0.2999,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,daf9dd7
+without_resume,4,104867810,100.01,0,0.3028,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,daf9dd7
+without_resume,5,104867810,100.01,0,0.311,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,daf9dd7
+without_resume,median,104867810,100.01,0,0.3057,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,daf9dd7
