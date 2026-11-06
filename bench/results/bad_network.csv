@@ -1,0 +1,13 @@
+tool,run,seconds,bytes_total,rtt_ms,cpu,python,commit
+deltasync,1,0.4585,1331910,50,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+deltasync,2,0.5003,1331910,50,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+deltasync,3,0.494,1331910,50,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+deltasync,4,0.5033,1331910,50,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+deltasync,5,0.4913,1331910,50,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+deltasync,median,0.494,1331910,50,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+rsync,1,0.5073,1239225,50,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+rsync,2,0.5111,1239225,50,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+rsync,3,0.5207,1239225,50,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+rsync,4,0.5095,1239225,50,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+rsync,5,0.5058,1239225,50,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+rsync,median,0.5095,1239225,50,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty

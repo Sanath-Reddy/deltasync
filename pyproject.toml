@@ -11,6 +11,7 @@ dependencies = ["xxhash>=3.4", "prometheus_client>=0.20", "flask>=3.0"]
 
 [project.optional-dependencies]
 test = ["pytest>=8", "pytest-asyncio>=0.23", "hypothesis>=6.100"]
+bench = ["matplotlib>=3.8"]
 
 [project.scripts]
 deltasync = "deltasync.client.cli:main"

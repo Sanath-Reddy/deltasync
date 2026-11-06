@@ -19,5 +19,7 @@ jobs:
         run: pytest
         env:
           DELTASYNC_ENGINE: python
+      - name: README results match the committed CSVs
+        run: python -m bench.report --check
       - name: Smoke benchmark (10 MB)
         run: python -m bench.run_bench smoke

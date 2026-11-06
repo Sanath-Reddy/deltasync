@@ -1,0 +1,25 @@
+clients,run,wall_s,p95_s,p50_s,synced_mb_per_s,server_peak_rss_mb,cpu,python,commit
+10,1,0.0724,0.0722,0.0714,1381.66,112.4,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+10,2,0.0777,0.0773,0.0761,1287.14,112.5,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+10,3,0.0711,0.071,0.0706,1406.44,112.4,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+10,4,0.0729,0.0728,0.0723,1371.57,112.2,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+10,5,0.0717,0.0715,0.0709,1394.76,112.7,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+10,median,0.0724,0.0722,0.0714,1381.66,112.4,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+50,1,0.313,0.3123,0.3095,1597.5,135.0,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+50,2,0.4454,0.4447,0.4396,1122.7,138.3,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+50,3,0.4383,0.4378,0.4304,1140.8,137.5,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+50,4,0.4143,0.4138,0.411,1206.86,136.2,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+50,5,0.4129,0.4122,0.409,1210.81,132.4,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+50,median,0.4143,0.4138,0.411,1206.86,136.2,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+100,1,0.8171,0.8161,0.807,1223.82,163.4,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+100,2,0.8038,0.803,0.7955,1244.06,172.7,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+100,3,0.8612,0.8606,0.8534,1161.16,159.4,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+100,4,0.8552,0.8543,0.848,1169.26,169.9,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+100,5,0.7915,0.7904,0.7838,1263.39,165.1,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+100,median,0.8171,0.8161,0.807,1223.82,165.1,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+200,1,1.5469,1.5442,1.5309,1292.92,237.6,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+200,2,1.0421,1.0397,1.0282,1919.15,230.7,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+200,3,1.1491,1.1478,1.1358,1740.45,241.1,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+200,4,1.0176,1.0154,1.002,1965.37,246.7,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+200,5,1.0243,1.0224,1.0082,1952.46,239.8,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty
+200,median,1.0421,1.0397,1.0282,1919.15,239.8,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,a6da8e0-dirty

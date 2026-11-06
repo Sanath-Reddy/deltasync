@@ -98,6 +98,9 @@ Server crashes are injected with `DELTASYNC_CRASH_AT=before_replace|after_replac
 | Server killed mid-commit | After restart the file is fully old or fully new, checked by SHA-256 |
 | Resume saves bytes | After a kill at 50%, bytes re-sent with resume are about half those without, measured at the proxy |
 | Journal is durable | The journal is written temp-then-rename, and a corrupt journal falls back to a full push |
+| Server restarted mid-push | After a SIGKILL and restart, RESUME continues from the journal |
+| Base changed before resume | Resume starts over from offset 0 against the new base |
+| Orphans | On startup, temp files without a journal are deleted; journalled ones are kept |
 
 ## Benchmark verification
 
@@ -113,4 +116,4 @@ These apply to every number that goes on the resume:
 - Bytes are counted at the proxy, never from the program's own estimate.
 - Five runs on a warm cache; the CSV stores all five and the median.
 - Each row records CPU model, Python version and commit hash.
-- A script checks that every number in the README results table appears in a CSV under `bench/results/`.
+- `python -m bench.report` writes the README results tables from the CSV medians, and `--check` (run in CI) fails if the README and the CSVs disagree.
