@@ -35,6 +35,17 @@ class _Ops:
         for i in range(start, end, MAX_LITERAL):
             self.ops.append(Literal(bytes(data[i : min(end, i + MAX_LITERAL)])))
 
+    def ready(self):
+        """Ops that can no longer change; a trailing COPY may still grow."""
+        keep = 1 if self.ops and isinstance(self.ops[-1], Copy) else 0
+        out = self.ops[: len(self.ops) - keep]
+        del self.ops[: len(self.ops) - keep]
+        return out
+
+    def rest(self):
+        out, self.ops = self.ops, []
+        return out
+
 
 def delta(sig, new, fixed_block=False):
     """Ops that rebuild new from the old file sig describes.
@@ -42,8 +53,14 @@ def delta(sig, new, fixed_block=False):
     new can be bytes or an mmap. fixed_block compares blocks by position only,
     the naive design kept as an ablation.
     """
+    return list(iter_delta(sig, new, fixed_block))
+
+
+def iter_delta(sig, new, fixed_block=False):
+    """Like delta(), but yields ops as they are found so memory stays flat."""
     if fixed_block:
-        return _delta_fixed(sig, new)
+        yield from _delta_fixed(sig, new)
+        return
     b = sig.block_size
     entries = sig.entries
     n = len(new)
@@ -73,6 +90,7 @@ def delta(sig, new, fixed_block=False):
                 if j is not None:
                     ops.literal(new, lit, pos)
                     ops.copy(j)
+                    yield from ops.ready()
                     expected = j + 1
                     pos += b
                     lit = pos
@@ -85,6 +103,10 @@ def delta(sig, new, fixed_block=False):
                 a = (a - out_byte + new[pos + b]) & MASK
                 bb = (bb - b * out_byte + a) & MASK
             pos += 1
+            if pos - lit >= MAX_LITERAL:
+                ops.literal(new, lit, pos)
+                lit = pos
+                yield from ops.ready()
 
     # The old file's short last block can only match the end of the new file.
     if tail and n - tail >= lit:
@@ -94,7 +116,7 @@ def delta(sig, new, fixed_block=False):
             ops.copy(len(entries) - 1)
             lit = n
     ops.literal(new, lit, n)
-    return ops.ops
+    yield from ops.rest()
 
 
 def _delta_fixed(sig, new):
@@ -107,7 +129,8 @@ def _delta_fixed(sig, new):
             ops.copy(j)
         else:
             ops.literal(new, i, i + len(block))
-    return ops.ops
+        yield from ops.ready()
+    yield from ops.rest()
 
 
 # Wire and file encoding of ops: b"C" + first, count  |  b"L" + length + bytes.

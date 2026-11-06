@@ -5,7 +5,7 @@ import os
 import uuid
 from pathlib import Path
 
-from deltasync.core.delta import Copy
+from deltasync.core.delta import Copy, decode_op
 
 CHUNK = 1 << 20
 
@@ -90,3 +90,61 @@ def patch_file(old_path, ops, block_size, out_path, expected_sha256):
     except BaseException:
         tmp.unlink(missing_ok=True)
         raise
+
+
+class Patcher:
+    """Applies a stream of encoded ops to a temp file next to the target.
+
+    The caller decides when to commit, so the server can take its lock and
+    check the base first.
+    """
+
+    def __init__(self, old_file, block_size, target, tag=None):
+        self.old = old_file
+        self.block_size = block_size
+        self.target = Path(target)
+        self.tmp = temp_path(target, tag)
+        self.out = open(self.tmp, "wb")
+        self.hash = hashlib.sha256()
+        self.ops = 0
+        self.literal_bytes = 0
+        self.matched_bytes = 0
+
+    def _write(self, data):
+        self.hash.update(data)
+        self.out.write(data)
+
+    def feed(self, payload):
+        """Apply one OPS frame, which always holds whole ops."""
+        offset = 0
+        while offset < len(payload):
+            op, offset = decode_op(payload, offset)
+            self.ops += 1
+            if isinstance(op, Copy):
+                if self.old is None:
+                    raise HashMismatch("COPY op with no base file")
+                before = self.out.tell()
+                apply_ops(self.old, [op], self.block_size, self._write)
+                self.matched_bytes += self.out.tell() - before
+            else:
+                self.literal_bytes += len(op.data)
+                self._write(op.data)
+
+    @property
+    def size(self):
+        return self.out.tell()
+
+    def finish(self, expected_sha256):
+        """Check the hash and make the temp file durable; raises HashMismatch."""
+        if self.hash.digest() != expected_sha256:
+            raise HashMismatch("patched file does not match the expected SHA-256")
+        self.out.flush()
+        os.fsync(self.out.fileno())
+        self.out.close()
+
+    def commit(self):
+        commit_temp(self.tmp, self.target)
+
+    def abort(self):
+        self.out.close()
+        self.tmp.unlink(missing_ok=True)

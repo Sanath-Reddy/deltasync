@@ -7,7 +7,7 @@ name = "deltasync"
 version = "0.1.0"
 description = "rsync-style file sync engine"
 requires-python = ">=3.12"
-dependencies = ["xxhash>=3.4"]
+dependencies = ["xxhash>=3.4", "prometheus_client>=0.20", "flask>=3.0"]
 
 [project.optional-dependencies]
 test = ["pytest>=8", "pytest-asyncio>=0.23", "hypothesis>=6.100"]
