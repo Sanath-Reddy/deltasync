@@ -84,10 +84,12 @@ def concurrency_section():
 
 
 def network_section():
-    rows = medians(RESULTS / "bad_network.csv", ["tool"])
-    body = [[name, f"{float(rows[(t,)]['seconds']):.2f} s", human(rows[(t,)]["bytes_total"])]
-            for t, name in [("deltasync", "DeltaSync"), ("rsync", "rsync")]]
-    return table(["Tool", "Wall-clock sync time", "Bytes on the wire"], body)
+    rows = medians(RESULTS / "bad_network.csv", ["tool", "loss_pct"])
+    body = []
+    for loss in sorted({k[1] for k in rows}, key=float):
+        body.append([f"{float(loss):g}%"] + [f"{float(rows[(t, loss)]['seconds']):.2f} s" for t in ["deltasync", "rsync"]]
+                    + [human(rows[(t, loss)]["bytes_total"]) for t in ["deltasync", "rsync"]])
+    return table(["Packet loss", "DeltaSync time", "rsync time", "DeltaSync bytes", "rsync bytes"], body)
 
 
 def resume_section():
@@ -107,7 +109,8 @@ def render():
         "### Delta speed: Python reference vs C++ core\n\n" + speed_section(),
         "### Concurrency (each client pushes a 10 MB file with a 1% edit)\n\n" + concurrency_section()
         + "\n\n![p95 by client count](bench/plots/concurrency.png)",
-        "### 50 ms round trip (100 MB file, 1% edit)\n\n" + network_section(),
+        "### Bad network: 50 ms round trip, with and without 1% loss (100 MB file, 1% edit)\n\n"
+        + network_section(),
         "### Resume (100 MB new file, cut at 50%)\n\n" + resume_section(),
     ])
 

@@ -48,7 +48,8 @@ def full_copy(path, proxy):
 
 
 class RsyncDaemon:
-    def __init__(self):
+    def __init__(self, prefix=()):
+        """prefix wraps the daemon command, e.g. to run it in a nested user namespace."""
         self.dir = Path(tempfile.mkdtemp(prefix="ds-rsyncd-"))
         self.store = self.dir / "store"
         self.store.mkdir()
@@ -57,11 +58,12 @@ class RsyncDaemon:
             self.port = s.getsockname()[1]
         conf = self.dir / "rsyncd.conf"
         conf.write_text(
-            f"pid file = {self.dir}/pid\nuse chroot = no\nport = {self.port}\n"
+            f"pid file = {self.dir}/pid\nuse chroot = no\nport = {self.port}\nlog file = {self.dir}/log\n"
+            "reverse lookup = no\n"
             f"[m]\npath = {self.store}\nread only = no\n"
         )
         self.proc = subprocess.Popen(
-            ["rsync", "--daemon", "--no-detach", f"--config={conf}", "--address=127.0.0.1"]
+            [*prefix, "rsync", "--daemon", "--no-detach", f"--config={conf}", "--address=127.0.0.1"]
         )
         for _ in range(50):
             try:
@@ -69,6 +71,12 @@ class RsyncDaemon:
                 break
             except OSError:
                 time.sleep(0.1)
+
+    def log(self):
+        try:
+            return (self.dir / "log").read_text()
+        except OSError:
+            return ""
 
     def close(self):
         self.proc.terminate()
@@ -82,10 +90,12 @@ def rsync_push(daemon, base, new, proxy):
         target.unlink(missing_ok=True)
     else:
         shutil.copyfile(base, target)
-    subprocess.run(
+    r = subprocess.run(
         ["rsync", "--stats", "--no-whole-file", "-q", str(new), f"rsync://127.0.0.1:{proxy.port}/m/f"],
-        check=True,
+        capture_output=True, text=True,
     )
+    if r.returncode:
+        raise RuntimeError(f"rsync failed ({r.returncode}): {r.stderr.strip()}\ndaemon log:\n{daemon.log()[-1500:]}")
     assert target.read_bytes() == new.read_bytes()
 
 

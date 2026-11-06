@@ -1,13 +1,25 @@
-tool,run,seconds,bytes_total,rtt_ms,cpu,python,commit
-deltasync,1,0.4612,1331910,50,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,daf9dd7
-deltasync,2,0.6029,1331910,50,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,daf9dd7
-deltasync,3,0.5019,1331910,50,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,daf9dd7
-deltasync,4,0.482,1331910,50,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,daf9dd7
-deltasync,5,0.4969,1331910,50,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,daf9dd7
-deltasync,median,0.4969,1331910,50,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,daf9dd7
-rsync,1,0.5069,1239225,50,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,daf9dd7
-rsync,2,0.5034,1239225,50,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,daf9dd7
-rsync,3,0.5039,1239225,50,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,daf9dd7
-rsync,4,0.5075,1239225,50,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,daf9dd7
-rsync,5,0.5065,1239225,50,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,daf9dd7
-rsync,median,0.5065,1239225,50,13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,daf9dd7
+tool,loss_pct,run,seconds,bytes_total,rtt_ms,method,cpu,python,commit
+deltasync,0.0,1,0.9823,1331910,50,"tc netem in user netns, mtu 1500",13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,ff76253
+deltasync,0.0,2,0.9374,1331910,50,"tc netem in user netns, mtu 1500",13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,ff76253
+deltasync,0.0,3,1.2313,1331910,50,"tc netem in user netns, mtu 1500",13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,ff76253
+deltasync,0.0,4,1.0882,1331910,50,"tc netem in user netns, mtu 1500",13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,ff76253
+deltasync,0.0,5,0.8979,1331910,50,"tc netem in user netns, mtu 1500",13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,ff76253
+deltasync,0.0,median,0.9823,1331910,50,"tc netem in user netns, mtu 1500",13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,ff76253
+rsync,0.0,1,1.0566,1239225,50,"tc netem in user netns, mtu 1500",13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,ff76253
+rsync,0.0,2,1.1099,1239225,50,"tc netem in user netns, mtu 1500",13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,ff76253
+rsync,0.0,3,1.1489,1239225,50,"tc netem in user netns, mtu 1500",13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,ff76253
+rsync,0.0,4,1.0824,1239225,50,"tc netem in user netns, mtu 1500",13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,ff76253
+rsync,0.0,5,1.1063,1239225,50,"tc netem in user netns, mtu 1500",13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,ff76253
+rsync,0.0,median,1.1063,1239225,50,"tc netem in user netns, mtu 1500",13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,ff76253
+deltasync,1.0,1,1.4833,1331910,50,"tc netem in user netns, mtu 1500",13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,ff76253
+deltasync,1.0,2,4.3011,1331910,50,"tc netem in user netns, mtu 1500",13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,ff76253
+deltasync,1.0,3,1.6861,1331910,50,"tc netem in user netns, mtu 1500",13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,ff76253
+deltasync,1.0,4,1.843,1331910,50,"tc netem in user netns, mtu 1500",13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,ff76253
+deltasync,1.0,5,1.1176,1331910,50,"tc netem in user netns, mtu 1500",13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,ff76253
+deltasync,1.0,median,1.6861,1331910,50,"tc netem in user netns, mtu 1500",13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,ff76253
+rsync,1.0,1,1.0577,1239225,50,"tc netem in user netns, mtu 1500",13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,ff76253
+rsync,1.0,2,1.1961,1239225,50,"tc netem in user netns, mtu 1500",13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,ff76253
+rsync,1.0,3,2.3673,1239225,50,"tc netem in user netns, mtu 1500",13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,ff76253
+rsync,1.0,4,2.255,1239225,50,"tc netem in user netns, mtu 1500",13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,ff76253
+rsync,1.0,5,1.201,1239225,50,"tc netem in user netns, mtu 1500",13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,ff76253
+rsync,1.0,median,1.201,1239225,50,"tc netem in user netns, mtu 1500",13th Gen Intel(R) Core(TM) i5-13450HX,3.14.6,ff76253

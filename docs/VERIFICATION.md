@@ -107,7 +107,7 @@ Server crashes are injected with `DELTASYNC_CRASH_AT=before_replace|after_replac
 Substitutions forced by the test machine (no root, Docker or SSH server):
 
 - The full-copy baseline is a raw TCP send of the whole file instead of `scp`. rsync runs as a local daemon with `--no-whole-file`.
-- The bad-network experiment adds 25 ms each way (50 ms RTT) in the proxy instead of `tc netem`, so packet loss is not emulated.
+- The bad-network experiment runs real `tc netem` (25 ms each way, 0% and 1% loss) inside an unprivileged user and network namespace instead of between two containers.
 - Edit patterns use 10 MB and 100 MB files. The 1 GB file appears only in the delta-speed experiment, because generating every 1 GB edit case at once does not fit in memory.
 
 
