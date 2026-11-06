@@ -110,7 +110,7 @@ CI runs the suite on both engines, checks that the C++ core built, and runs a 10
 ## Results
 
 <!-- results:start -->
-Measured on 13th Gen Intel(R) Core(TM) i5-13450HX, Python 3.14.6, commit `a6da8e0-dirty`. Medians of 5 runs.
+Measured on 13th Gen Intel(R) Core(TM) i5-13450HX, Python 3.14.6, commit `daf9dd7`. Medians of 5 runs.
 
 ### Bytes on the wire by edit pattern
 
@@ -152,17 +152,17 @@ Measured on 13th Gen Intel(R) Core(TM) i5-13450HX, Python 3.14.6, commit `a6da8e
 
 | File (1% changed in place) | Python | C++ | Speed-up |
 | --- | --- | --- | --- |
-| 100 MB | 67 MB/s | 2,244 MB/s | 33.5× |
-| 1 GB | 67 MB/s | 2,222 MB/s | 33.2× |
+| 100 MB | 69 MB/s | 2,308 MB/s | 33.7× |
+| 1 GB | 68 MB/s | 2,157 MB/s | 31.9× |
 
 ### Concurrency (each client pushes a 10 MB file with a 1% edit)
 
 | Clients at once | p95 completion | File data synced per second | Server peak memory |
 | --- | --- | --- | --- |
-| 10 | 0.07 s | 1,382 MB/s | 112 MB |
-| 50 | 0.41 s | 1,207 MB/s | 136 MB |
-| 100 | 0.82 s | 1,224 MB/s | 165 MB |
-| 200 | 1.04 s | 1,919 MB/s | 240 MB |
+| 10 | 0.07 s | 1,395 MB/s | 112 MB |
+| 50 | 0.29 s | 1,709 MB/s | 134 MB |
+| 100 | 0.58 s | 1,731 MB/s | 165 MB |
+| 200 | 1.51 s | 1,321 MB/s | 239 MB |
 
 ![p95 by client count](bench/plots/concurrency.png)
 
@@ -170,7 +170,7 @@ Measured on 13th Gen Intel(R) Core(TM) i5-13450HX, Python 3.14.6, commit `a6da8e
 
 | Tool | Wall-clock sync time | Bytes on the wire |
 | --- | --- | --- |
-| DeltaSync | 0.49 s | 1.3 MB |
+| DeltaSync | 0.50 s | 1.3 MB |
 | rsync | 0.51 s | 1.2 MB |
 
 ### Resume (100 MB new file, cut at 50%)
