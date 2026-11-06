@@ -23,3 +23,41 @@ jobs:
         run: python -m bench.report --check
       - name: Smoke benchmark (10 MB)
         run: python -m bench.run_bench smoke
+
+  docker-demo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and start the containers
+        run: docker compose up -d --build
+      - name: Slow the client's link (50 ms, 1% loss)
+        run: docker compose exec -T client tc qdisc add dev eth0 root netem delay 50ms loss 1%
+      - name: Make test files in the client
+        run: docker compose exec -T client python -m bench.make_files --sizes 10
+      - name: First push sends the whole file
+        run: docker compose exec -T client deltasync push bench/data/10mb.orig f.bin --server server:5001 | tee first.log
+      - name: Pushing a 1 KB insert sends only the insert
+        run: |
+          docker compose exec -T client deltasync push bench/data/10mb.insert_1k_start f.bin --server server:5001 | tee second.log
+          grep -q "1024 literal bytes, 10485760 reused" second.log
+      - name: Server copy matches the client's file
+        run: |
+          a=$(docker compose exec -T client sha256sum bench/data/10mb.insert_1k_start | cut -d' ' -f1)
+          b=$(docker compose exec -T server sha256sum /store/f.bin | cut -d' ' -f1)
+          echo "client $a server $b"
+          test "$a" = "$b"
+      - name: Pull it back into a new client file
+        run: |
+          docker compose exec -T client deltasync pull f.bin /tmp/back.bin --server server:5001
+          docker compose exec -T client cmp /tmp/back.bin bench/data/10mb.insert_1k_start
+      - name: Dashboard reports the reused bytes
+        run: |
+          for i in $(seq 30); do curl -sf localhost:8000/api/metrics > m.json && break; sleep 1; done
+          cat m.json
+          python3 -c "import json; m = json.load(open('m.json'))['metrics']; assert m['deltasync_matched_bytes_total'] >= 10485760, m"
+      - name: Container logs
+        if: always()
+        run: docker compose logs
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
