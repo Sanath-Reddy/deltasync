@@ -1,8 +1,11 @@
 """Server-side storage: safe path resolution and per-file commit locks."""
 
 import asyncio
+import json
 import os
 from pathlib import Path, PurePosixPath
+
+from deltasync.core.patch import fsync_dir
 
 
 class UnsafePath(Exception):
@@ -67,3 +70,47 @@ class _Held:
     async def __aexit__(self, *exc):
         self.lock.release()
         self.locks._release_obj(self.path)
+
+
+class Journal:
+    """Resume state for one transfer, written temp-then-rename so it is never half-written."""
+
+    def __init__(self, target, tag):
+        target = Path(target)
+        self.path = target.parent / f".{target.name}.{tag}.journal"
+
+    def write(self, state):
+        tmp = self.path.with_name(self.path.name + ".new")
+        with open(tmp, "w") as f:
+            json.dump(state, f)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, self.path)
+        fsync_dir(self.path.parent)
+
+    def read(self):
+        """The saved state, or None when missing or unreadable."""
+        try:
+            state = json.loads(self.path.read_text())
+        except (OSError, ValueError):
+            return None
+        return state if isinstance(state, dict) else None
+
+    def remove(self):
+        self.path.unlink(missing_ok=True)
+
+    @property
+    def exists(self):
+        return self.path.exists()
+
+
+def clean_orphans(root):
+    """Delete temp files that have no journal (nothing can resume them), and vice versa."""
+    for tmp in Path(root).rglob(".*.tmp"):
+        if not tmp.with_suffix(".journal").exists():
+            tmp.unlink(missing_ok=True)
+    for journal in Path(root).rglob(".*.journal"):
+        if not journal.with_suffix(".tmp").exists():
+            journal.unlink(missing_ok=True)
+    for half in Path(root).rglob(".*.journal.new"):
+        half.unlink(missing_ok=True)

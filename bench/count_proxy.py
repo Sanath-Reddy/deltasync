@@ -13,9 +13,10 @@ import time
 
 
 class CountingProxy:
-    def __init__(self, target_host, target_port, delay=0.0, listen_port=0):
+    def __init__(self, target_host, target_port, delay=0.0, listen_port=0, rate=None):
         self.target = (target_host, target_port)
         self.delay = delay
+        self.rate = rate  # bytes per second each way, or None for unlimited
         self.listen_port = listen_port
         self.up = 0  # client -> server
         self.down = 0  # server -> client
@@ -94,6 +95,8 @@ class CountingProxy:
                 else:
                     self.down += len(chunk)
                 queue.put_nowait((time.monotonic() + self.delay, chunk))
+                if self.rate:
+                    await asyncio.sleep(len(chunk) / self.rate)
                 # Keep memory bounded when the far side is slow.
                 if queue.qsize() > 256:
                     await asyncio.sleep(0.001)

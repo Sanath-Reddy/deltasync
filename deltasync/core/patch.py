@@ -99,13 +99,20 @@ class Patcher:
     check the base first.
     """
 
-    def __init__(self, old_file, block_size, target, tag=None):
+    def __init__(self, old_file, block_size, target, tag=None, resume_offset=0):
         self.old = old_file
         self.block_size = block_size
         self.target = Path(target)
         self.tmp = temp_path(target, tag)
-        self.out = open(self.tmp, "wb")
         self.hash = hashlib.sha256()
+        if resume_offset:
+            # Keep the durable prefix of an interrupted transfer and rehash it.
+            self.out = open(self.tmp, "r+b")
+            self.out.truncate(resume_offset)
+            while chunk := self.out.read(CHUNK):
+                self.hash.update(chunk)
+        else:
+            self.out = open(self.tmp, "wb")
         self.ops = 0
         self.literal_bytes = 0
         self.matched_bytes = 0
@@ -133,6 +140,16 @@ class Patcher:
     @property
     def size(self):
         return self.out.tell()
+
+    def make_durable(self):
+        """fsync what has been written so far; returns the durable size."""
+        self.out.flush()
+        os.fsync(self.out.fileno())
+        return self.out.tell()
+
+    def close(self):
+        """Stop without deleting the temp file, so the transfer can resume."""
+        self.out.close()
 
     def finish(self, expected_sha256):
         """Check the hash and make the temp file durable; raises HashMismatch."""
