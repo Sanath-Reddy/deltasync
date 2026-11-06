@@ -1,0 +1,11 @@
+.git
+.venv
+.ci-venv
+**/__pycache__
+.pytest_cache
+.hypothesis
+bench/data
+build
+*.egg-info
+deltasync/_native*.so
+DeltaSync Implementation Plan.md
