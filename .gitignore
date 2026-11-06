@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.hypothesis/
+build/
+dist/
+*.egg-info/
+*.so
+
+# personal planning notes, kept out of the public repo
+DeltaSync Implementation Plan.md
