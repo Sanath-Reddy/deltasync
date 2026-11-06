@@ -186,9 +186,9 @@ Measured on 13th Gen Intel(R) Core(TM) i5-13450HX, Python 3.14.6, commit `daf9dd
 - Bytes are counted at a TCP relay ([bench/count_proxy.py](bench/count_proxy.py)), never from the program's own estimate, and include both directions.
 - Five runs per configuration on a warm page cache; the CSVs keep every run plus the median, with CPU model, Python version and commit hash on each row.
 - rsync runs as a local daemon with `--stats --no-whole-file`, so it does real delta transfer.
-- The test machine has no root, Docker or SSH server, which forced three substitutions:
+- The bad-network experiment uses real `tc netem` (25 ms delay and the given loss in each direction, so a 50 ms round trip) inside an unprivileged user and network namespace (`unshare -rn`), so it needs no root. netem applies only to the relay-to-server hop, and loopback's MTU is set to 1500 so loss hits normal-sized packets. Applying it to both directions is slightly harsher than netem on one side of a container link.
+- The test machine has no root, Docker or SSH server, which forced two more substitutions:
   - The full-copy baseline is a raw TCP send of the file, not `scp`.
-  - The 50 ms round trip is added inside the relay instead of with `tc netem`, so packet loss is not emulated.
   - Edit patterns use 10 MB and 100 MB files; the 1 GB file appears only in the delta-speed test.
 
 Reproduce everything (needs `rsync`; writes about 2 GB of test files to `bench/data/`):

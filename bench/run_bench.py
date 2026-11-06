@@ -22,7 +22,7 @@ import uuid
 from pathlib import Path
 
 from bench.baseline import RsyncDaemon, rsync_push
-from bench.common import write_rows
+from bench.common import RESULTS, write_rows
 from bench.count_proxy import ProxyThread
 from bench.make_files import DATA, MB
 from deltasync.client.client import Client
@@ -248,27 +248,66 @@ def exp_concurrency(runs, levels=(10, 50, 100, 200)):
                       ["wall_s", "p95_s", "p50_s", "synced_mb_per_s", "server_peak_rss_mb"])
 
 
-def exp_network(runs, delay=0.025):
-    """Wall-clock sync of a 1% edit to 100 MB over a 50 ms RTT link, DeltaSync vs rsync."""
+NETNS_FLAG = "DELTASYNC_IN_NETNS"
+
+
+def netem(ports, delay_ms=25, loss_pct=1.0):
+    """Impair only traffic to and from these ports on loopback with tc netem.
+
+    Needs CAP_NET_ADMIN, which the unprivileged user+network namespace gives us.
+    Delay and loss apply to each direction, so the round trip is 2 * delay_ms.
+    """
+    def tc(*args):
+        subprocess.run(["tc", *args], check=True)
+
+    subprocess.run(["tc", "qdisc", "del", "dev", "lo", "root"], capture_output=True)
+    tc("qdisc", "add", "dev", "lo", "root", "handle", "1:", "prio")
+    tc("qdisc", "add", "dev", "lo", "parent", "1:3", "handle", "30:", "netem",
+       "delay", f"{delay_ms}ms", "loss", f"{loss_pct}%")
+    for port in ports:
+        for field in ["dport", "sport"]:
+            tc("filter", "add", "dev", "lo", "protocol", "ip", "parent", "1:0", "prio", "3",
+               "u32", "match", "ip", field, str(port), "0xffff", "flowid", "1:3")
+
+
+def exp_network(runs, delay_ms=25, losses=(0.0, 1.0)):
+    """Wall-clock sync of a 1% edit to 100 MB over a 50 ms RTT link, DeltaSync vs rsync.
+
+    Runs inside a user+network namespace (unshare -rn) so tc netem can add real
+    delay and packet loss without root. The relay sits on an unimpaired hop and
+    only counts bytes; netem impairs the relay-to-server hop.
+    """
+    if os.environ.get(NETNS_FLAG) != "1":
+        subprocess.run(["unshare", "-rn", sys.executable, "-m", "bench.run_bench", "network",
+                        "--runs", str(runs)], env={**os.environ, NETNS_FLAG: "1"}, check=True)
+        return RESULTS / "bad_network.csv"
+    subprocess.run(["ip", "link", "set", "lo", "up", "mtu", "1500"], check=True)
     base, new = DATA / "100mb.orig", DATA / "100mb.inplace_1pct"
     rows = []
-    daemon = RsyncDaemon()
+    # As namespace root, rsyncd calls setgroups, which the namespace forbids; a nested
+    # user namespace runs it as an ordinary user in the same network namespace.
+    daemon = RsyncDaemon(prefix=["unshare", "-U", "--map-user=1000", "--map-group=1000"])
     try:
-        with ServerProc() as srv, ProxyThread("127.0.0.1", srv.port, delay) as dp, \
-                ProxyThread("127.0.0.1", daemon.port, delay) as rp:
-            for run in range(1, runs + 1):
-                srv.place("f", base)
-                up, down, secs = timed(dp, lambda: push(dp.port, new, "f"))
-                assert same(srv.root / "f", new)
-                rows.append({"tool": "deltasync", "run": run, "seconds": round(secs, 4), "bytes_total": up + down})
-                up, down, secs = timed(rp, lambda: rsync_push(daemon, base, new, rp))
-                rows.append({"tool": "rsync", "run": run, "seconds": round(secs, 4), "bytes_total": up + down})
-            print("network", rows[-2:], flush=True)
+        with ServerProc() as srv, ProxyThread("127.0.0.1", srv.port) as dp, \
+                ProxyThread("127.0.0.1", daemon.port) as rp:
+            for loss in losses:
+                netem([srv.port, daemon.port], delay_ms, loss)
+                for run in range(1, runs + 1):
+                    srv.place("f", base)
+                    up, down, secs = timed(dp, lambda: push(dp.port, new, "f"))
+                    assert same(srv.root / "f", new)
+                    rows.append({"tool": "deltasync", "loss_pct": loss, "run": run, "seconds": round(secs, 4),
+                                 "bytes_total": up + down})
+                    up, down, secs = timed(rp, lambda: rsync_push(daemon, base, new, rp))
+                    rows.append({"tool": "rsync", "loss_pct": loss, "run": run, "seconds": round(secs, 4),
+                                 "bytes_total": up + down})
+                print("network", loss, rows[-2:], flush=True)
     finally:
         daemon.close()
     for r in rows:
-        r["rtt_ms"] = round(2 * delay * 1000)
-    return write_rows("bad_network", rows, ["tool"], ["seconds", "bytes_total"])
+        r["rtt_ms"] = 2 * delay_ms
+        r["method"] = "tc netem in user netns, mtu 1500"
+    return write_rows("bad_network", rows, ["tool", "loss_pct"], ["seconds", "bytes_total"])
 
 
 def exp_resume(runs):
