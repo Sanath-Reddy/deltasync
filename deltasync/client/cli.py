@@ -64,7 +64,7 @@ def cmd_serve(args):
 
     async def run():
         server = await Server(args.root, _token(args), args.host, args.port,
-                              checkpoint_bytes=args.checkpoint_bytes).start()
+                              checkpoint_bytes=args.checkpoint_bytes, block_size=args.block_size).start()
         if args.metrics_port:
             server.metrics.serve(args.metrics_port, args.host)
         print(f"serving {server.root} on {args.host}:{server.port}", flush=True)
@@ -136,6 +136,7 @@ def build_parser():
     p.add_argument("--port", type=int, default=5001)
     p.add_argument("--metrics-port", type=int, help="serve Prometheus metrics on this port")
     p.add_argument("--checkpoint-bytes", type=int, default=4 << 20, help="journal a resume point this often")
+    p.add_argument("--block-size", type=int, help="fixed block size instead of the sqrt rule")
     p.add_argument("--token")
     p.set_defaults(fn=cmd_serve)
 

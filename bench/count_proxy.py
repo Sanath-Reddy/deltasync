@@ -60,29 +60,44 @@ class CountingProxy:
         self._conns |= {c_writer, s_writer}
         try:
             await asyncio.gather(
-                self._pipe(c_reader, s_writer, "up"),
-                self._pipe(s_reader, c_writer, "down"),
+                self._pipe(c_reader, s_writer, "up", c_writer),
+                self._pipe(s_reader, c_writer, "down", s_writer),
             )
         finally:
             self._conns -= {c_writer, s_writer}
             for w in (c_writer, s_writer):
                 w.close()
 
-    async def _pipe(self, reader, writer, direction):
-        queue = asyncio.Queue()
+    async def _pipe(self, reader, writer, direction, source):
+        # Bounded, so a slow receiver pushes back on the sender like a real link.
+        queue = asyncio.Queue(maxsize=16)
 
         async def send():
+            broken = False
             while True:
                 due, chunk = await queue.get()
                 if chunk is None:
                     break
+                if broken:
+                    continue  # keep draining so the reader never blocks on a dead link
                 wait = due - time.monotonic()
                 if wait > 0:
                     await asyncio.sleep(wait)
-                writer.write(chunk)
-                await writer.drain()
-            if writer.can_write_eof():
-                writer.write_eof()
+                try:
+                    # drain() stays quiet once the transport is closing, so check it.
+                    if writer.transport.is_closing():
+                        raise ConnectionResetError("peer closed")
+                    writer.write(chunk)
+                    await writer.drain()
+                except (ConnectionError, OSError):
+                    # The far side is gone: drop the near side too, as a real path would.
+                    broken = True
+                    source.transport.abort()
+            if not broken and not writer.transport.is_closing() and writer.can_write_eof():
+                try:
+                    writer.write_eof()
+                except (ConnectionError, OSError):
+                    pass
 
         sender = asyncio.create_task(send())
         try:
@@ -94,28 +109,22 @@ class CountingProxy:
                         break
                 else:
                     self.down += len(chunk)
-                queue.put_nowait((time.monotonic() + self.delay, chunk))
+                await queue.put((time.monotonic() + self.delay, chunk))
                 if self.rate:
                     await asyncio.sleep(len(chunk) / self.rate)
-                # Keep memory bounded when the far side is slow.
-                if queue.qsize() > 256:
-                    await asyncio.sleep(0.001)
         except (ConnectionError, OSError):
-            pass
+            writer.transport.abort()
         finally:
-            queue.put_nowait((0, None))
-            try:
-                await sender
-            except (ConnectionError, OSError):
-                pass
+            await queue.put((0, None))
+            await sender
 
 
 class ProxyThread:
     """Runs a CountingProxy on its own event loop, for synchronous benchmark scripts."""
 
-    def __init__(self, target_host, target_port, delay=0.0):
+    def __init__(self, target_host, target_port, delay=0.0, rate=None):
         self.loop = asyncio.new_event_loop()
-        self.proxy = CountingProxy(target_host, target_port, delay)
+        self.proxy = CountingProxy(target_host, target_port, delay, rate=rate)
         self.thread = threading.Thread(target=self.loop.run_forever, daemon=True)
 
     def __enter__(self):

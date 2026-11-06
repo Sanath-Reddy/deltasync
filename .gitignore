@@ -16,3 +16,4 @@ bench/data/
 
 # native build output
 deltasync/_native*.so
+bench/results/_smoke*

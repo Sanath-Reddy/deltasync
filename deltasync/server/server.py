@@ -37,11 +37,12 @@ def _fd_identity(f):
 
 class Server:
     def __init__(self, root, token, host="127.0.0.1", port=5001, idle_timeout=60.0, workers=8,
-                 checkpoint_bytes=4 << 20):
+                 checkpoint_bytes=4 << 20, block_size=None):
         self.root = Path(root).resolve()
         self.root.mkdir(parents=True, exist_ok=True)
         clean_orphans(self.root)
         self.checkpoint_bytes = checkpoint_bytes
+        self.block_size = block_size  # None: about sqrt(file size)
         self.crash_at = os.environ.get("DELTASYNC_CRASH_AT")
         self.token = token
         self.host = host
@@ -170,9 +171,9 @@ class Server:
                 journal.remove()
 
             if old is None:
-                sig = empty_signature(block_size_for(size))
+                sig = empty_signature(self.block_size or block_size_for(size))
             else:
-                sig = await self._run(signature_fileobj, old)
+                sig = await self._run(signature_fileobj, old, self.block_size)
             await send_signature(writer, sig)
 
             patcher = await self._run(lambda: Patcher(old, sig.block_size, target, transfer_id, offset))
