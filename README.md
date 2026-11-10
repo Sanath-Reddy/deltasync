@@ -1,5 +1,7 @@
 # DeltaSync
 
+[![CI](https://github.com/Sanath-Reddy/deltasync/actions/workflows/ci.yml/badge.svg)](https://github.com/Sanath-Reddy/deltasync/actions/workflows/ci.yml)
+
 An rsync-style file sync engine built from scratch: a rolling checksum finds unchanged blocks at any offset, so an edit anywhere in a file, even an insertion that shifts every later byte, sends only the changed data. An asyncio server handles many clients without a thread each, resumes dropped pushes, and never leaves a half-written file. The hot loop runs in C++ through pybind11 with the GIL released.
 
 Every number below is regenerated from `bench/results/*.csv` by `python -m bench.report`; CI fails if they drift.
